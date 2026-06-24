@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Summer Cinema Showdown</title>
+  <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:#04252F;color:#FFFDF7;font-family:Georgia,serif;min-height:100vh}
+    #root{min-height:100vh}
+    input,button{font-family:Georgia,serif}
+    .btn{padding:8px 16px;border-radius:8px;font-weight:700;font-size:11px;letter-spacing:1px;cursor:pointer;border:1px solid rgba(255,255,255,0.13);background:rgba(255,255,255,0.05);color:#FFFDF7;transition:all 0.15s;white-space:nowrap}
+    .btn-primary{background:linear-gradient(135deg,#FF6B00,#EF476F);border-color:transparent}
+    .btn-green{background:linear-gradient(135deg,#06D6A0,#1F8ECD);border-color:transparent}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+    .card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px}
+    .input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#FFFDF7;padding:9px 13px;font-size:13px;outline:none;width:100%}
+    .err{color:#EF476F;font-size:11px;margin-top:4px}
+    .screen{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:36px 16px 80px}
+    .wide-screen{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:20px 12px 80px}
+    .tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.35);padding:8px 14px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:1px;white-space:nowrap;margin-bottom:-1px}
+    .tab-btn.active{color:#FF6B00;border-bottom-color:#FF6B00}
+    .row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .row:hover{background:rgba(255,209,102,0.07)}
+    .matchup-side{display:flex;align-items:center;gap:4px;padding:3.5px 6px;border-radius:5px;min-height:21px;transition:all 0.13s;cursor:pointer}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const h = React.createElement;
+const {useState, useEffect} = React;
+
+const KEY = "$2a$10$Cs6WsxXTF3dwHHoSIFD6fOsOHCPLt/Rky90/D6poS.iIYla0W3iM6";
+const BIN = "6a282457f5f4af5e29d24ab8";
+const PIN = "htown2025";
+const PTS = [1,2,4,8,16,32];
+const ROUND_NAMES = ["Round of 64","Round of 32","Sweet 16","Elite 8","Final Four","Championship"];
+
+const REGIONS = [
+  {id:"beach",name:"BEACH",icon:"&#127958;",color:"#FFD166",movies:["Jaws","The Sandlot","Grease","Mamma Mia!","Top Gun","Dirty Dancing","Lilo & Stitch","Blue Crush","Baywatch","Cocktail","Weekend at Bernies","Into the Blue","The Beach","The Blue Lagoon","Overboard","Summer Rental"]},
+  {id:"sun",name:"SUN",icon:"&#9728;",color:"#FF6B00",movies:["Stand By Me","The Goonies","Ferris Buellers Day Off","Superbad","Risky Business","Fast Times at Ridgemont High","Dazed and Confused","American Graffiti","Wet Hot American Summer","Lampoons Vacation","Caddyshack","Meatballs","Porkys","Heavyweights","Camp Nowhere","Sisterhood Traveling Pants"]},
+  {id:"wave",name:"WAVE",icon:"&#127754;",color:"#06D6A0",movies:["Point Break","Cast Away","The Notebook","Forgetting Sarah Marshall","50 First Dates","Under the Tuscan Sun","Eat Pray Love","Roman Holiday","Enchanted April","Summer I Turned Pretty","Blue Hawaii","South Pacific","Splash","Aquamarine","Fools Gold","Overboard 1987"]},
+  {id:"heat",name:"HEAT",icon:"&#128293;",color:"#EF476F",movies:["Jurassic Park","Independence Day","Men in Black","The Dark Knight","Iron Man","Avengers Endgame","Guardians of the Galaxy","Spider-Man No Way Home","Top Gun Maverick","Mission Impossible","Transformers","Pirates of the Caribbean","Raiders of the Lost Ark","Indiana Jones Temple of Doom","Aliens","The Terminator"]},
+];
+
+async function dbRead(){
+  const r=await fetch("https://api.jsonbin.io/v3/b/"+BIN+"/latest",{headers:{"X-Master-Key":KEY}});
+  if(!r.ok) throw new Error("Read failed "+r.status);
+  return (await r.json()).record;
+}
+async function dbWrite(data){
+  const r=await fetch("https://api.jsonbin.io/v3/b/"+BIN,{method:"PUT",headers:{"Content-Type":"application/json","X-Master-Key":KEY},body:JSON.stringify(data)});
+  if(!r.ok) throw new Error("Write failed "+r.status);
+  return r.json();
+}
+
+function gk(ri,r,mi){return ri+"_"+r+"_"+mi;}
+
+function getSurvivor(ri,rIdx,mi,actuals){
+  if(rIdx===0) return {top:REGIONS[ri].movies[mi*2],bot:REGIONS[ri].movies[mi*2+1]};
+  const p0=getSurvivor(ri,rIdx-1,mi*2,actuals);
+  const p1=getSurvivor(ri,rIdx-1,mi*2+1,actuals);
+  const w0=actuals[gk(ri,rIdx-1,mi*2)];
+  const w1=actuals[gk(ri,rIdx-1,mi*2+1)];
+  return{top:w0?(w0==="top"?p0.top:p0.bot):null,bot:w1?(w1==="top"?p1.top:p1.bot):null};
+}
+
+function getRegionChamp(ri,actuals){
+  const s=getSurvivor(ri,3,0,actuals);
+  const w=actuals[gk(ri,3,0)];
+  return w?(w==="top"?s.top:s.bot):null;
+}
+
+function deriveRegion(ri,picks){
+  const rounds=[];
+  rounds.push(Array.from({length:8},(_,i)=>({top:REGIONS[ri].movies[i*2],bot:REGIONS[ri].movies[i*2+1],winner:picks[gk(ri,0,i)]||null})));
+  for(let r=1;r<=3;r++){
+    const prev=rounds[r-1],cur=[];
+    for(let m=0;m<prev.length/2;m++){
+      const a=prev[m*2],b=prev[m*2+1];
+      cur.push({top:a.winner?(a.winner==="top"?a.top:a.bot):null,bot:b.winner?(b.winner==="top"?b.top:b.bot):null,winner:picks[gk(ri,r,m)]||null});
+    }
+    rounds.push(cur);
+  }
+  return rounds;
+}
+
+function deriveFinals(picks,rr){
+  const champs=rr.map(r=>{const e=r[3][0];return e.winner?(e.winner==="top"?e.top:e.bot):null;});
+  const ff=[{top:champs[0],bot:champs[1],winner:picks["ff_0"]||null},{top:champs[2],bot:champs[3],winner:picks["ff_1"]||null}];
+  const ct=ff[0].winner?(ff[0].winner==="top"?ff[0].top:ff[0].bot):null;
+  const cb=ff[1].winner?(ff[1].winner==="top"?ff[1].top:ff[1].bot):null;
+  return{ff,champ:{top:ct,bot:cb,winner:picks["champ"]||null}};
+}
+
+function getChampion(picks){
+  const rr=REGIONS.map((_,ri)=>deriveRegion(ri,picks));
+  const{champ}=deriveFinals(picks,rr);
+  return champ.winner?(champ.winner==="top"?champ.top:champ.bot):null;
+}
+
+function scoreBracket(picks,actuals){
+  return Object.entries(actuals).reduce((s,[key,val])=>{
+    if(picks[key]!==val) return s;
+    const r=key.startsWith("ff")?4:key==="champ"?5:parseInt(key.split("_")[1]);
+    return s+(PTS[Math.min(r,5)]||1);
+  },0);
+}
+
+function freshData(){return{entries:{},rounds:{current:0,deadlines:{},locked:{},actualWinners:{}},roundVotes:{}};}
+
+// ---- small UI pieces ----
+function E(tag,props,...kids){return h(tag,props,...kids);}
+
+function Btn({label,onClick,cls,disabled,style}){
+  return h("button",{className:"btn "+(cls||""),onClick,disabled,style},label);
+}
+
+function Card({title,children,style}){
+  return h("div",{className:"card",style},
+    title&&h("div",{style:{fontSize:12,color:"#FFD166",letterSpacing:1,marginBottom:12,paddingBottom:10,borderBottom:"1px solid rgba(255,255,255,0.07)"}},title),
+    children
+  );
+}
+
+function Loader(){
+  return h("div",{style:{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14}},
+    h("div",{style:{fontSize:48}},"☀️"),
+    h("div",{style:{color:"#FFD166",letterSpacing:6,fontSize:12}},"LOADING...")
+  );
+}
+
+function ErrorBanner({msg,onDismiss}){
+  return h("div",{style:{position:"fixed",top:0,left:0,right:0,zIndex:999,background:"rgba(239,71,111,0.9)",color:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:12}},
+    h("span",null,"⚠️ "+msg),
+    h("button",{onClick:onDismiss,style:{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:16}},"x")
+  );
+}
+
+function ProgPill({done,total}){
+  const pct=Math.round(done/total*100);
+  return h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+    h("div",{style:{width:72,height:5,background:"rgba(255,255,255,0.1)",borderRadius:3,overflow:"hidden"}},
+      h("div",{style:{height:"100%",width:pct+"%",background:pct===100?"#06D6A0":"#FF6B00",borderRadius:3,transition:"width 0.3s"}})
+    ),
+    h("span",{style:{fontSize:10,color:"rgba(255,255,255,0.4)"}},done+"/"+total)
+  );
+}
+
+// ---- Matchup ----
+function Matchup({m,picked,actual,onPick,color,isR0,seed0,seed1}){
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:2,margin:"2px 0"}},
+    ["top","bot"].map((side,si)=>{
+      const movie=m[side],isPicked=picked===side,isAW=actual===side,isAL=actual&&actual!==side;
+      const isRight=isAW&&isPicked,isWrong=isAL&&isPicked,empty=!movie;
+      const bg=isRight?"rgba(6,214,160,0.14)":isWrong?"rgba(239,71,111,0.08)":isPicked?(color+"18"):"rgba(255,255,255,0.04)";
+      const border="1px solid "+(isRight?"#06D6A0":isWrong?"#EF476F":isPicked?color:"rgba(255,255,255,0.07)");
+      return h("div",{key:side,className:"matchup-side",onClick:()=>!empty&&onPick&&onPick(side),
+        style:{background:bg,border,opacity:isAL?0.32:1,cursor:(!empty&&onPick)?"pointer":"default"}},
+        isR0&&h("span",{style:{fontSize:6,color,opacity:0.6,minWidth:9,flexShrink:0}},si===0?seed0:seed1),
+        h("span",{style:{fontSize:9,color:isAW?"#06D6A0":empty?"rgba(255,255,255,0.2)":"#FFFDF7",flex:1,lineHeight:1.2,fontStyle:empty?"italic":"normal"}},
+          empty?"TBD":movie.length>19?movie.slice(0,18)+"...":movie),
+        isPicked&&!actual&&h("span",{style:{fontSize:7,color,flexShrink:0}},"✓"),
+        isRight&&h("span",{style:{fontSize:8,flexShrink:0}},"✓"),
+        isWrong&&h("span",{style:{fontSize:8,flexShrink:0}},"✗"),
+        isAW&&h("span",{style:{fontSize:8,color:"#06D6A0",flexShrink:0}},"★")
+      );
+    })
+  );
+}
+
+// ---- Region Grid ----
+function RegionGrid({reg,ri,rounds,picks,onPick,actuals}){
+  const rNames=["R64","R32","Sweet 16","Elite 8"];
+  return h("div",{style:{marginBottom:24,background:"rgba(255,255,255,0.02)",border:"1px solid "+reg.color+"30",borderRadius:12,padding:"14px 10px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
+      h("span",{style:{fontSize:16},dangerouslySetInnerHTML:{__html:reg.icon}}),
+      h("span",{style:{fontSize:14,fontWeight:700,color:reg.color,letterSpacing:3}},reg.name+" REGION")
+    ),
+    h("div",{style:{display:"flex",gap:4,overflowX:"auto",paddingBottom:2}},
+      rounds.map((round,rIdx)=>
+        h("div",{key:rIdx,style:{flex:rIdx===0?"2 0 155px":"1 0 108px",minWidth:rIdx===0?148:100}},
+          h("div",{style:{fontSize:7,letterSpacing:2,color:"rgba(255,255,255,0.25)",textAlign:"center",marginBottom:5,textTransform:"uppercase"}},rNames[rIdx]),
+          h("div",{style:{display:"flex",flexDirection:"column",gap:2}},
+            round.map((m,mi)=>{
+              const key=gk(ri,rIdx,mi);
+              return h(Matchup,{key:mi,m,picked:picks[key],actual:actuals[key],onPick:onPick?side=>onPick(key,side):null,color:reg.color,isR0:rIdx===0,seed0:mi*2+1,seed1:mi*2+2});
+            })
+          )
+        )
+      )
+    )
+  );
+}
+
+// ---- Finals Grid ----
+function FinalsGrid({ff,champ,picks,onPick,actuals}){
+  const champion=getChampion(picks);
+  return h("div",{style:{background:"rgba(255,209,102,0.03)",border:"1px solid rgba(255,209,102,0.12)",borderRadius:12,padding:"14px 10px",marginBottom:20}},
+    h("div",{style:{fontSize:14,color:"#FFD166",letterSpacing:3,marginBottom:14}},"FINAL FOUR & CHAMPIONSHIP"),
+    h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+      ff.map((m,i)=>h("div",{key:i,style:{flex:"1 1 150px"}},
+        h("div",{style:{fontSize:7,letterSpacing:2,color:"rgba(255,255,255,0.25)",marginBottom:5}},"SEMIFINAL "+(i+1)),
+        h(Matchup,{m,picked:picks["ff_"+i],actual:actuals["ff_"+i],onPick:onPick?side=>onPick("ff_"+i,side):null,color:"#FFD166"})
+      )),
+      h("div",{style:{flex:"1 1 150px"}},
+        h("div",{style:{fontSize:7,letterSpacing:2,color:"rgba(255,255,255,0.25)",marginBottom:5}},"CHAMPIONSHIP"),
+        h(Matchup,{m:champ,picked:picks["champ"],actual:actuals["champ"],onPick:onPick?side=>onPick("champ",side):null,color:"#FF6B00"})
+      ),
+      champion&&h("div",{style:{flex:"1 1 130px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,textAlign:"center"}},
+        h("div",{style:{fontSize:26}},"🏆"),
+        h("div",{style:{fontSize:8,letterSpacing:2,color:"#06D6A0"}},"YOUR CHAMPION"),
+        h("div",{style:{fontSize:13,color:"#FFD166",fontWeight:700}},champion)
+      )
+    )
+  );
+}
+
+// ---- Home Screen ----
+function HomeScreen({appData,setScreen,setViewId}){
+  const [showAdmin,setShowAdmin]=useState(false);
+  const [pin,setPin]=useState("");
+  const [pinErr,setPinErr]=useState(false);
+  const [nameQ,setNameQ]=useState("");
+  const [lookErr,setLookErr]=useState("");
+  const entries=appData.entries||{};
+  const rounds=appData.rounds||{};
+  const actuals=rounds.actualWinners||{};
+  const locked=rounds.locked||{};
+  const current=rounds.current||0;
+  const deadlines=rounds.deadlines||{};
+  const roundVotes=appData.roundVotes||{};
+  const roundVoteOpen=current>0&&locked[current-1]&&!locked[current];
+  const bracketOpen=!locked[0];
+  const currentVotes=(roundVotes[current]||[]);
+  const scored=Object.entries(entries).map(([id,e])=>({id,...e,score:scoreBracket(e.picks,actuals)})).sort((a,b)=>b.score-a.score);
+
+  function handleLookup(){
+    const n=nameQ.trim().toLowerCase();
+    const found=Object.entries(entries).find(([,e])=>e.name.toLowerCase()===n);
+    if(found){setViewId(found[0]);setScreen("view");}
+    else setLookErr("No bracket found with that name.");
+  }
+  function handleAdmin(){
+    if(pin===PIN){setScreen("admin");setPinErr(false);}
+    else setPinErr(true);
+  }
+
+  return h("div",{className:"screen"},
+    h("div",{style:{textAlign:"center",marginBottom:40}},
+      h("div",{style:{fontSize:52,marginBottom:8}},"☀️"),
+      h("h1",{style:{fontSize:"clamp(26px,6vw,48px)",fontWeight:900,margin:0,lineHeight:1.05,letterSpacing:2,background:"linear-gradient(135deg,#FFD166,#FF6B00,#EF476F)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}},"SUMMER CINEMA\nSHOWDOWN"),
+      h("p",{style:{color:"#FFD166",letterSpacing:4,fontSize:10,marginTop:10}},"H-TOWN ACCOUNTING - 64 FILMS - 6 ROUNDS"),
+      h("div",{style:{display:"inline-flex",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,marginTop:16,overflow:"hidden"}},
+        [{label:"Brackets",value:Object.keys(entries).length,color:"#FFD166"},{label:"Round",value:ROUND_NAMES[current],color:"#FF6B00"},{label:"Status",value:locked[current]?"Locked":"Open",color:"#06D6A0"}].map((s,i)=>
+          h("div",{key:i,style:{padding:"12px 20px",textAlign:"center",borderRight:i<2?"1px solid rgba(255,255,255,0.08)":"none"}},
+            h("div",{style:{fontSize:20,fontWeight:700,color:s.color}},s.value),
+            h("div",{style:{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginTop:3}},s.label)
+          )
+        )
+      )
+    ),
+    h("div",{style:{display:"flex",gap:3,marginBottom:28,overflowX:"auto",paddingBottom:4}},
+      ROUND_NAMES.map((n,i)=>{
+        const active=i===current,past=i<current,dl=deadlines[i];
+        return h("div",{key:i,style:{flex:1,minWidth:72,textAlign:"center",padding:"8px 4px",borderRadius:8,background:active?"rgba(255,107,0,0.12)":past?"rgba(6,214,160,0.05)":"rgba(255,255,255,0.03)",border:"1px solid "+(active?"#FF6B00":past?"rgba(6,214,160,0.25)":"rgba(255,255,255,0.06)")}},
+          h("div",{style:{fontSize:8,fontWeight:700,letterSpacing:1,color:active?"#FF6B00":past?"#06D6A0":"rgba(255,255,255,0.25)",textTransform:"uppercase"}},n),
+          dl&&h("div",{style:{fontSize:7,color:"rgba(255,255,255,0.25)",marginTop:2}},new Date(dl).toLocaleDateString()),
+          locked[i]&&h("div",{style:{fontSize:7,color:"#EF476F",marginTop:1}},"Locked")
+        );
+      })
+    ),
+    h("div",{style:{display:"flex",gap:10,marginBottom:28,flexWrap:"wrap"}},
+      h("button",{className:"btn btn-primary",disabled:!bracketOpen,onClick:()=>setScreen("entry"),style:{flex:"1 1 200px",fontSize:14,padding:13}},
+        bracketOpen?"Fill Out My Bracket":"Bracket Submission Closed"),
+      h("button",{className:"btn btn-green",disabled:!roundVoteOpen,onClick:()=>setScreen("roundvote"),style:{flex:"1 1 200px",fontSize:14,padding:13}},
+        roundVoteOpen?"Vote This Round!":"Round Voting Closed")
+    ),
+    roundVoteOpen&&h(Card,{title:"Round "+ROUND_NAMES[current]+" - Live Vote Tally",style:{marginBottom:20}},
+      h("p",{style:{color:"rgba(255,255,255,0.4)",fontSize:11,marginBottom:12}},currentVotes.length+" votes cast - "+PTS[Math.min(current,5)]+" pts per correct pick")
+    ),
+    h(Card,{title:"Find My Bracket",style:{marginBottom:20}},
+      h("div",{style:{display:"flex",gap:8}},
+        h("input",{className:"input",value:nameQ,onChange:e=>{setNameQ(e.target.value);setLookErr("");},placeholder:"Your name...",onKeyDown:e=>e.key==="Enter"&&handleLookup(),style:{flex:1}}),
+        h("button",{className:"btn",onClick:handleLookup},"Find")
+      ),
+      lookErr&&h("div",{className:"err"},lookErr)
+    ),
+    scored.length>0&&locked[0]&&h(Card,{title:"Leaderboard",style:{marginBottom:20}},
+      scored.slice(0,10).map((e,i)=>
+        h("div",{key:e.id,className:"row",onClick:()=>{setViewId(e.id);setScreen("view");}},
+          h("span",{style:{width:22,fontSize:13,textAlign:"center",flexShrink:0}},i===0?"1st":i===1?"2nd":i===2?"3rd":(i+1)+"th"),
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontSize:13,fontWeight:700}},e.name),
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,0.35)"}},e.dept||"-"+" - "+(getChampion(e.picks)||"No champion"))
+          ),
+          h("div",{style:{textAlign:"right"}},
+            h("div",{style:{color:"#FFD166",fontWeight:700,fontSize:16}},e.score),
+            h("div",{style:{fontSize:8,color:"rgba(255,255,255,0.3)",letterSpacing:1}},"PTS")
+          )
+        )
+      )
+    ),
+    h("div",{style:{textAlign:"center",marginTop:32}},
+      !showAdmin
+        ?h("button",{onClick:()=>setShowAdmin(true),style:{background:"none",border:"none",color:"rgba(255,255,255,0.18)",fontSize:10,letterSpacing:2,cursor:"pointer",textTransform:"uppercase"}},"Admin Access")
+        :h("div",{style:{display:"inline-flex",flexDirection:"column",gap:8,alignItems:"center"}},
+          h("input",{type:"password",placeholder:"Admin PIN",value:pin,onChange:e=>{setPin(e.target.value);setPinErr(false);},onKeyDown:e=>e.key==="Enter"&&handleAdmin(),className:"input",style:{width:200,textAlign:"center"}}),
+          pinErr&&h("div",{className:"err"},"Wrong PIN"),
+          h("button",{className:"btn",onClick:handleAdmin},"Enter Admin")
+        )
+    )
+  );
+}
+
+// ---- Entry Screen ----
+function EntryScreen({appData,save,onBack}){
+  const [name,setName]=useState("");
+  const [dept,setDept]=useState("");
+  const [picks,setPicks]=useState({});
+  const [step,setStep]=useState("info");
+  const [infoErr,setInfoErr]=useState("");
+  const [submitErr,setSubmitErr]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [success,setSuccess]=useState(false);
+  const entries=appData.entries||{};
+
+  function handleInfoNext(){
+    if(!name.trim()){setInfoErr("Please enter your name.");return;}
+    const dup=Object.values(entries).find(e=>e.name.toLowerCase()===name.trim().toLowerCase());
+    if(dup){setInfoErr("A bracket with that name already exists.");return;}
+    setInfoErr("");setStep("bracket");
+  }
+
+  async function handleSubmit(){
+    const done=Object.keys(picks).length;
+    if(done<63){setSubmitErr("Complete all picks first ("+done+"/63 done).");return;}
+    setBusy(true);
+    const d=JSON.parse(JSON.stringify(appData));
+    const id="e_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);
+    d.entries[id]={name:name.trim(),dept:dept.trim(),picks,submittedAt:new Date().toISOString()};
+    await save(d);
+    setSuccess(true);setBusy(false);
+  }
+
+  function setPick(key,val){setPicks(p=>({...p,[key]:val}));setSubmitErr("");}
+
+  if(success) return h("div",{style:{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16,padding:20}},
+    h("div",{style:{fontSize:56}},"🎉"),
+    h("h2",{style:{fontSize:28,color:"#06D6A0",margin:0}},"Bracket Submitted!"),
+    h("p",{style:{color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:340}},"Good luck, "+name+"!"),
+    h("button",{className:"btn btn-primary",onClick:onBack,style:{marginTop:8}},"Back to Home")
+  );
+
+  if(step==="info") return h("div",{style:{position:"relative",zIndex:1,maxWidth:460,margin:"0 auto",padding:"40px 20px"}},
+    h("button",{onClick:onBack,style:{background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:22}},"<"),
+    h("h2",{style:{fontSize:26,color:"#FFD166",margin:"16px 0 6px"}},"Your Info"),
+    h("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+      h("label",{style:{display:"flex",flexDirection:"column",gap:5,fontSize:9,letterSpacing:2,color:"rgba(255,255,255,0.4)",textTransform:"uppercase"}},
+        "Full Name",h("input",{className:"input",value:name,onChange:e=>{setName(e.target.value);setInfoErr("");},placeholder:"Jamie Garcia"})
+      ),
+      h("label",{style:{display:"flex",flexDirection:"column",gap:5,fontSize:9,letterSpacing:2,color:"rgba(255,255,255,0.4)",textTransform:"uppercase"}},
+        "Department",h("input",{className:"input",value:dept,onChange:e=>setDept(e.target.value),placeholder:"Tax, Audit, Advisory..."})
+      ),
+      infoErr&&h("div",{className:"err"},infoErr),
+      h("button",{className:"btn btn-primary",onClick:handleInfoNext,style:{marginTop:8}},"Continue - Fill Bracket")
+    )
+  );
+
+  const regionRounds=REGIONS.map((_,ri)=>deriveRegion(ri,picks));
+  const {ff,champ}=deriveFinals(picks,regionRounds);
+  const done=Object.keys(picks).length;
+
+  return h("div",{className:"wide-screen"},
+    h("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}},
+      h("button",{onClick:()=>setStep("info"),style:{background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:22}},"<"),
+      h("div",{style:{flex:1}},
+        h("h2",{style:{margin:0,fontSize:20,color:"#FFD166"}},name+"'s Bracket"),
+        h("p",{style:{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}},done+"/63 picks - click a film to advance it")
+      ),
+      h(ProgPill,{done,total:63}),
+      h("button",{className:"btn btn-primary",onClick:handleSubmit,disabled:busy},busy?"Saving...":"Submit Bracket")
+    ),
+    submitErr&&h("div",{style:{background:"rgba(239,71,111,0.12)",border:"1px solid #EF476F",borderRadius:8,padding:"10px 14px",color:"#EF476F",fontSize:12,marginBottom:16}},submitErr),
+    REGIONS.map((reg,ri)=>h(RegionGrid,{key:ri,reg,ri,rounds:regionRounds[ri],picks,onPick:setPick,actuals:{}})),
+    h(FinalsGrid,{ff,champ,picks,onPick:setPick,actuals:{}}),
+    h("div",{style:{textAlign:"center",marginTop:28}},
+      submitErr&&h("div",{className:"err",style:{marginBottom:12}},submitErr),
+      h("button",{className:"btn btn-primary",onClick:handleSubmit,disabled:busy,style:{fontSize:15,padding:"13px 36px"}},busy?"Saving...":"Submit My Bracket ("+done+"/63)")
+    )
+  );
+}
+
+// ---- Round Vote Screen ----
+function RoundVoteScreen({appData,save,onBack}){
+  const rounds=appData.rounds||{};
+  const current=rounds.current||0;
+  const actuals=rounds.actualWinners||{};
+  const locked=rounds.locked||{};
+  const isOpen=current>0&&locked[current-1]&&!locked[current];
+  const [picks,setPicks]=useState({});
+  const [submitted,setSubmitted]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const pts=PTS[Math.min(current,5)]||1;
+
+  const matchups=[];
+  if(isOpen){
+    if(current>=1&&current<=3){
+      REGIONS.forEach((reg,ri)=>{
+        const count=Math.pow(2,3-current);
+        for(let mi=0;mi<count;mi++){
+          const s=getSurvivor(ri,current,mi,actuals);
+          if(s.top||s.bot) matchups.push({key:gk(ri,current,mi),top:s.top,bot:s.bot,color:reg.color,label:reg.name});
+        }
+      });
+    } else if(current===4){
+      const c=[0,1,2,3].map(ri=>getRegionChamp(ri,actuals));
+      if(c[0]||c[1]) matchups.push({key:"ff_0",top:c[0],bot:c[1],color:"#FFD166",label:"Final Four"});
+      if(c[2]||c[3]) matchups.push({key:"ff_1",top:c[2],bot:c[3],color:"#FFD166",label:"Final Four"});
+    } else if(current===5){
+      const c=[0,1,2,3].map(ri=>getRegionChamp(ri,actuals));
+      const top=actuals["ff_0"]?(actuals["ff_0"]==="top"?c[0]:c[1]):null;
+      const bot=actuals["ff_1"]?(actuals["ff_1"]==="top"?c[2]:c[3]):null;
+      if(top||bot) matchups.push({key:"champ",top,bot,color:"#FF6B00",label:"Championship"});
+    }
+  }
+
+  if(!isOpen) return h("div",{style:{position:"relative",zIndex:1,maxWidth:500,margin:"0 auto",padding:"60px 20px",textAlign:"center"}},
+    h("button",{onClick:onBack,style:{background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:22}},"<"),
+    h("div",{style:{marginTop:20}},
+      h("div",{style:{fontSize:48,marginBottom:16}},"🔒"),
+      h("h2",{style:{color:"#FFD166",marginBottom:8}},"Voting Not Open Yet"),
+      h("p",{style:{color:"rgba(255,255,255,0.4)",fontSize:13}},"Round voting opens once the previous round is locked. Check back soon!"),
+      h("button",{className:"btn",onClick:onBack,style:{marginTop:24}},"Back to Home")
+    )
+  );
+
+  if(submitted) return h("div",{style:{position:"relative",zIndex:1,maxWidth:500,margin:"0 auto",padding:"60px 20px",textAlign:"center"}},
+    h("div",{style:{fontSize:56,marginBottom:16}},"🗳️"),
+    h("h2",{style:{color:"#06D6A0",marginBottom:8}},"Vote Submitted!"),
+    h("p",{style:{color:"rgba(255,255,255,0.4)",fontSize:13}},"Your picks for "+ROUND_NAMES[current]+" are in. "+pts+" pt"+(pts!==1?"s":"")+" per correct pick!"),
+    h("button",{className:"btn btn-primary",onClick:onBack,style:{marginTop:24}},"Back to Home")
+  );
+
+  async function handleSubmit(){
+    if(Object.keys(picks).length<matchups.length){alert("Please pick a winner for every matchup!");return;}
+    setBusy(true);
+    const d=JSON.parse(JSON.stringify(appData));
+    d.roundVotes=d.roundVotes||{};
+    d.roundVotes[current]=d.roundVotes[current]||[];
+    d.roundVotes[current].push({picks,submittedAt:new Date().toISOString()});
+    await save(d);
+    setSubmitted(true);setBusy(false);
+  }
+
+  return h("div",{style:{position:"relative",zIndex:1,maxWidth:700,margin:"0 auto",padding:"24px 16px 80px"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:24,flexWrap:"wrap"}},
+      h("button",{onClick:onBack,style:{background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:22}},"<"),
+      h("div",{style:{flex:1}},
+        h("h2",{style:{margin:0,fontSize:20,color:"#FFD166"}},ROUND_NAMES[current]+" - Round Vote"),
+        h("p",{style:{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}},pts+" pt"+(pts!==1?"s":"")+" per correct pick - Anonymous")
+      ),
+      h(ProgPill,{done:Object.keys(picks).length,total:matchups.length})
+    ),
+    h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+      matchups.map(({key,top,bot,color,label})=>{
+        const picked=picks[key];
+        return h("div",{key,className:"card"},
+          h("div",{style:{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.3)",marginBottom:8}},label),
+          h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+            [[top,"top"],[bot,"bot"]].map(([movie,side])=>{
+              if(!movie) return null;
+              const sel=picked===side;
+              return h("div",{key:side,onClick:()=>setPicks(p=>({...p,[key]:side})),
+                style:{flex:"1 1 140px",padding:"10px 14px",borderRadius:8,cursor:"pointer",background:sel?"rgba(255,107,0,0.15)":"rgba(255,255,255,0.04)",border:"2px solid "+(sel?color:"rgba(255,255,255,0.08)"),transition:"all 0.15s",display:"flex",alignItems:"center",gap:8}},
+                h("div",{style:{width:16,height:16,borderRadius:"50%",border:"2px solid "+(sel?color:"rgba(255,255,255,0.2)"),background:sel?color:"transparent",flexShrink:0}}),
+                h("span",{style:{fontSize:12,color:sel?"#FFFDF7":"rgba(255,255,255,0.7)",fontWeight:sel?700:400}},movie)
+              );
+            })
+          )
+        );
+      })
+    ),
+    h("div",{style:{textAlign:"center",marginTop:28}},
+      h("button",{className:"btn btn-primary",onClick:handleSubmit,disabled:busy,style:{fontSize:14,padding:"12px 36px"}},busy?"Saving...":"Submit My Votes")
+    )
+  );
+}
+
+// ---- View Screen ----
+function ViewScreen({appData,entryId,onBack}){
+  const entry=appData.entries?.[entryId];
+  const actuals=appData.rounds?.actualWinners||{};
+  const locked=appData.rounds?.locked||{};
+  if(!entry) return h("div",{style:{padding:40,textAlign:"center",color:"rgba(255,255,255,0.4)"}},
+    "Entry not found.",h("br"),h("br"),h("button",{className:"btn",onClick:onBack},"Back")
+  );
+  const picks=entry.picks;
+  const rr=REGIONS.map((_,ri)=>deriveRegion(ri,picks));
+  const {ff,champ}=deriveFinals(picks,rr);
+  const pts=scoreBracket(picks,actuals);
+  const champ_movie=getChampion(picks);
+  return h("div",{className:"wide-screen"},
+    h("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}},
+      h("button",{onClick:onBack,style:{background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:22}},"<"),
+      h("div",{style:{flex:1}},
+        h("h2",{style:{margin:0,fontSize:20,color:"#FFD166"}},entry.name+"'s Bracket"),
+        h("p",{style:{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}},
+          (entry.dept||"-")+" - "+new Date(entry.submittedAt).toLocaleDateString()+(locked[0]?" - Champion: "+(champ_movie||"Not picked"):""))
+      ),
+      h("div",{style:{background:"rgba(255,209,102,0.08)",border:"1px solid rgba(255,209,102,0.3)",borderRadius:10,padding:"8px 16px",textAlign:"center"}},
+        h("div",{style:{fontSize:22,color:"#FFD166",fontWeight:700}},pts),
+        h("div",{style:{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)"}},"PTS")
+      )
+    ),
+    locked[0]
+      ?[...REGIONS.map((reg,ri)=>h(RegionGrid,{key:ri,reg,ri,rounds:rr[ri],picks,onPick:null,actuals})),h(FinalsGrid,{key:"finals",ff,champ,picks,onPick:null,actuals})]
+      :h("div",{style:{textAlign:"center",padding:"60px 20px",color:"rgba(255,255,255,0.35)",fontSize:14}},"Brackets are hidden until Round 1 begins.")
+  );
+}
+
+// ---- Admin ----
+function AdminScreen({appData,save,onBack,setViewId,setScreen}){
+  const [tab,setTab]=useState("overview");
+  const [busy,setBusy]=useState(false);
+  const entries=appData.entries||{};
+  const rounds=appData.rounds||{};
+  const actuals=rounds.actualWinners||{};
+  const list=Object.entries(entries);
+  const scored=list.map(([id,e])=>({id,...e,score:scoreBracket(e.picks,actuals)})).sort((a,b)=>b.score-a.score);
+
+  async function patch(fn){
+    setBusy(true);
+    const d=JSON.parse(JSON.stringify(appData));
+    fn(d);
+    await save(d);
+    setBusy(false);
+  }
+
+  const tabs=["Overview","Rounds","Results","Entries","Round Votes"];
+
+  return h("div",{className:"wide-screen"},
+    h("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}},
+      h("button",{onClick:onBack,style:{background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:22}},"<"),
+      h("div",{style:{flex:1}},
+        h("h2",{style:{margin:0,fontSize:20,color:"#FF6B00"}},"Admin Dashboard"),
+        h("p",{style:{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}},"H-Town Accounting"+(busy?" - Saving...":""))
+      ),
+      h("div",{style:{background:"rgba(255,107,0,0.08)",border:"1px solid rgba(255,107,0,0.3)",borderRadius:10,padding:"8px 16px",textAlign:"center"}},
+        h("div",{style:{fontSize:22,color:"#FF6B00",fontWeight:700}},list.length),
+        h("div",{style:{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)"}},"BRACKETS")
+      )
+    ),
+    h("div",{style:{display:"flex",gap:2,marginBottom:20,borderBottom:"1px solid rgba(255,255,255,0.07)",overflowX:"auto"}},
+      tabs.map(t=>h("button",{key:t,className:"tab-btn "+(tab===t?"active":""),onClick:()=>setTab(t)},t))
+    ),
+    tab==="Overview"&&h(AdminOverview,{scored,list,rounds,setViewId,setScreen}),
+    tab==="Rounds"&&h(AdminRounds,{rounds,patch}),
+    tab==="Results"&&h(AdminResults,{actuals,patch,list}),
+    tab==="Entries"&&h(AdminEntries,{scored,patch,setViewId,setScreen}),
+    tab==="Round Votes"&&h(AdminRoundVotes,{appData,actuals})
+  );
+}
+
+function AdminOverview({scored,list,rounds,setViewId,setScreen}){
+  const complete=list.filter(([,e])=>Object.keys(e.picks).length>=63).length;
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:20}},
+    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10}},
+      [{label:"Total Brackets",value:list.length,color:"#FFD166"},{label:"Complete",value:complete,color:"#06D6A0"},{label:"Incomplete",value:list.length-complete,color:"#EF476F"},{label:"Active Round",value:ROUND_NAMES[rounds.current||0],color:"#FF6B00"}].map(s=>
+        h("div",{key:s.label,style:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"14px 12px",textAlign:"center"}},
+          h("div",{style:{fontSize:22,color:s.color,fontWeight:700}},s.value),
+          h("div",{style:{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)",marginTop:4,textTransform:"uppercase"}},s.label)
+        )
+      )
+    ),
+    h(Card,{title:"Top 10"},
+      scored.slice(0,10).map((e,i)=>
+        h("div",{key:e.id,className:"row",onClick:()=>{setViewId(e.id);setScreen("view");}},
+          h("span",{style:{width:22,textAlign:"center",fontSize:13}},(i+1)+"."),
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontSize:13,fontWeight:700}},e.name),
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,0.35)"}},e.dept)
+          ),
+          h("div",{style:{color:"#FFD166",fontWeight:700,fontSize:15}},e.score+" pts")
+        )
+      )
+    )
+  );
+}
+
+function AdminRounds({rounds,patch}){
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+    h("p",{style:{color:"rgba(255,255,255,0.4)",fontSize:12,marginTop:0}},"Set deadlines, advance rounds, lock to freeze submissions. Round voting opens automatically when previous round is locked and current round is active and unlocked."),
+    ROUND_NAMES.map((name,i)=>{
+      const active=rounds.current===i,lk=rounds.locked?.[i],dl=rounds.deadlines?.[i]||"";
+      return h("div",{key:i,style:{background:active?"rgba(255,107,0,0.07)":"rgba(255,255,255,0.03)",border:"1px solid "+(active?"#FF6B00":"rgba(255,255,255,0.07)"),borderRadius:12,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}},
+        h("div",{style:{flex:"1 1 120px"}},
+          h("div",{style:{fontWeight:700,color:active?"#FF6B00":"#FFFDF7",fontSize:14}},name),
+          h("div",{style:{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2}},"Round "+(i+1))
+        ),
+        h("div",{style:{display:"flex",flexDirection:"column",gap:4,flex:"1 1 180px"}},
+          h("label",{style:{fontSize:8,color:"rgba(255,255,255,0.35)",letterSpacing:2}},"DEADLINE"),
+          h("input",{type:"datetime-local",value:dl,onChange:e=>patch(d=>{d.rounds.deadlines=d.rounds.deadlines||{};d.rounds.deadlines[i]=e.target.value;}),className:"input",style:{fontSize:11,padding:"5px 10px"}})
+        ),
+        h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+          !active&&h("button",{className:"btn",onClick:()=>patch(d=>d.rounds.current=i)},"Set Active"),
+          active&&h("span",{style:{fontSize:10,color:"#FF6B00",background:"rgba(255,107,0,0.1)",border:"1px solid #FF6B00",borderRadius:20,padding:"4px 12px"}},"ACTIVE"),
+          h("button",{className:"btn",onClick:()=>patch(d=>{d.rounds.locked=d.rounds.locked||{};d.rounds.locked[i]=!d.rounds.locked[i];}),style:{borderColor:lk?"#EF476F":"",color:lk?"#EF476F":""}},lk?"Locked":"Lock")
+        )
+      );
+    })
+  );
+}
+
+function AdminResults({actuals,patch,list}){
+  function tally(key){let t=0,b=0;list.forEach(([,e])=>{if(e.picks[key]==="top")t++;else if(e.picks[key]==="bot")b++;});return{t,b,total:t+b};}
+
+  const allMatchups=[];
+  REGIONS.forEach((reg,ri)=>{
+    [0,1,2,3].forEach(rIdx=>{
+      const count=Math.pow(2,3-rIdx);
+      for(let mi=0;mi<count;mi++){
+        const s=getSurvivor(ri,rIdx,mi,actuals);
+        allMatchups.push({key:gk(ri,rIdx,mi),label:reg.name+" - "+["R64","R32","Sweet 16","Elite 8"][rIdx]+" - Match "+(mi+1),top:s.top,bot:s.bot,color:reg.color});
+      }
+    });
+  });
+  const c=[0,1,2,3].map(ri=>getRegionChamp(ri,actuals));
+  const ff0w=actuals["ff_0"],ff1w=actuals["ff_1"];
+  const ffTop=ff0w?(ff0w==="top"?c[0]:c[1]):null;
+  const ffBot=ff1w?(ff1w==="top"?c[2]:c[3]):null;
+  allMatchups.push({key:"ff_0",label:"Final Four - Semifinal 1",top:c[0],bot:c[1],color:"#FFD166"});
+  allMatchups.push({key:"ff_1",label:"Final Four - Semifinal 2",top:c[2],bot:c[3],color:"#FFD166"});
+  allMatchups.push({key:"champ",label:"Championship",top:ffTop,bot:ffBot,color:"#FF6B00"});
+
+  return h("div",null,
+    h("p",{style:{color:"rgba(255,255,255,0.4)",fontSize:12,marginTop:0}},"Click a film to mark it as the actual winner. Scores update instantly."),
+    allMatchups.map(({key,label,top,bot,color})=>{
+      if(!top&&!bot) return null;
+      const {t,b,total}=tally(key),actual=actuals[key];
+      const tp=total>0?Math.round(t/total*100):50,bp=100-tp;
+      return h("div",{key,style:{marginBottom:8,background:"rgba(255,255,255,0.03)",borderRadius:8,padding:"10px 12px",border:"1px solid rgba(255,255,255,0.05)"}},
+        h("div",{style:{fontSize:8,color:"rgba(255,255,255,0.3)",letterSpacing:2,marginBottom:7}},label),
+        [[top,"top",t,tp],[bot,"bot",b,bp]].map(([movie,side,votes,pct])=>{
+          if(!movie) return null;
+          const isA=actual===side;
+          return h("div",{key:side,onClick:()=>patch(d=>{d.rounds.actualWinners=d.rounds.actualWinners||{};if(d.rounds.actualWinners[key]===side)delete d.rounds.actualWinners[key];else d.rounds.actualWinners[key]=side;}),
+            style:{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:6,marginBottom:3,cursor:"pointer",background:isA?"rgba(6,214,160,0.1)":"rgba(255,255,255,0.02)",border:"1px solid "+(isA?"#06D6A0":"rgba(255,255,255,0.04)"),transition:"all 0.15s"}},
+            h("div",{style:{width:14,height:14,borderRadius:"50%",border:"2px solid "+(isA?"#06D6A0":"rgba(255,255,255,0.15)"),background:isA?"#06D6A0":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#04252F",fontWeight:700}},isA?"*":""),
+            h("span",{style:{flex:1,fontSize:11,color:isA?"#06D6A0":"#FFFDF7"}},movie),
+            h("div",{style:{width:60,height:4,background:"rgba(255,255,255,0.07)",borderRadius:2,overflow:"hidden"}},h("div",{style:{height:"100%",width:pct+"%",background:color,borderRadius:2}})),
+            h("span",{style:{fontSize:10,color,minWidth:50,textAlign:"right"}},votes+" ("+pct+"%)")
+          );
+        })
+      );
+    })
+  );
+}
+
+function AdminEntries({scored,patch,setViewId,setScreen}){
+  const [q,setQ]=useState("");
+  const filtered=scored.filter(e=>e.name.toLowerCase().includes(q.toLowerCase())||(e.dept||"").toLowerCase().includes(q.toLowerCase()));
+  return h("div",null,
+    h("div",{style:{marginBottom:14}},h("input",{placeholder:"Search...",value:q,onChange:e=>setQ(e.target.value),className:"input",style:{maxWidth:340}})),
+    h("div",{style:{display:"flex",flexDirection:"column",gap:4}},
+      filtered.map((e,i)=>
+        h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}},
+          h("span",{style:{width:26,textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.3)"}},(i+1)),
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontWeight:700,fontSize:13}},e.name),
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,0.35)"}},e.dept+" - "+Object.keys(e.picks).length+"/63 picks")
+          ),
+          h("div",{style:{color:"#FFD166",fontWeight:700,fontSize:14}},e.score+" pts"),
+          h("button",{className:"btn",onClick:()=>{setViewId(e.id);setScreen("view");}},"View"),
+          h("button",{onClick:()=>{if(window.confirm("Delete this entry?"))patch(d=>delete d.entries[e.id]);},style:{background:"none",border:"none",color:"#EF476F",cursor:"pointer",fontSize:18,padding:"0 2px"}},"x")
+        )
+      ),
+      filtered.length===0&&h("div",{style:{color:"rgba(255,255,255,0.3)",fontSize:13,padding:"20px",textAlign:"center"}},"No entries found.")
+    )
+  );
+}
+
+function AdminRoundVotes({appData,actuals}){
+  const roundVotes=appData.roundVotes||{};
+  return h("div",null,
+    h("p",{style:{color:"rgba(255,255,255,0.4)",fontSize:12,marginTop:0}},"Anonymous round votes by round."),
+    ROUND_NAMES.map((name,i)=>{
+      const votes=roundVotes[i]||[];
+      const tally={};
+      votes.forEach(v=>{Object.entries(v.picks||{}).forEach(([k,s])=>{tally[k]=tally[k]||{top:0,bot:0};tally[k][s]=(tally[k][s]||0)+1;});});
+      return h("div",{key:i,style:{marginBottom:16,background:"rgba(255,255,255,0.02)",borderRadius:10,padding:"12px 14px",border:"1px solid rgba(255,255,255,0.06)"}},
+        h("div",{style:{fontWeight:700,color:"#FFD166",fontSize:13,marginBottom:2}},name),
+        h("div",{style:{fontSize:10,color:"rgba(255,255,255,0.35)",marginBottom:8}},votes.length+" votes - "+PTS[Math.min(i,5)]+" pts per correct pick"),
+        votes.length===0&&h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.2)"}},"No votes yet")
+      );
+    })
+  );
+}
+
+// ---- Root App ----
+function App(){
+  const [screen,setScreen]=useState("home");
+  const [appData,setAppData]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState(null);
+  const [viewId,setViewId]=useState(null);
+
+  useEffect(()=>{load();},[]);
+  useEffect(()=>{
+    if(screen==="home"||screen==="admin"){
+      const t=setInterval(load,12000);
+      return()=>clearInterval(t);
+    }
+  },[screen]);
+
+  async function load(){
+    try{
+      const d=await dbRead();
+      setAppData(d&&d.entries?d:freshData());
+      setError(null);
+    }catch(e){
+      setError(e.message);
+      setAppData(prev=>prev||freshData());
+    }finally{setLoading(false);}
+  }
+
+  async function save(newData){
+    try{
+      const fresh=await dbRead();
+      const merged=JSON.parse(JSON.stringify(fresh||freshData()));
+      if(newData.entries) Object.assign(merged.entries,newData.entries);
+      if(newData.rounds) merged.rounds=newData.rounds;
+      if(newData.roundVotes){
+        merged.roundVotes=merged.roundVotes||{};
+        Object.entries(newData.roundVotes).forEach(([r,votes])=>{
+          merged.roundVotes[r]=merged.roundVotes[r]||[];
+          const existing=new Set(merged.roundVotes[r].map(v=>v.submittedAt));
+          (votes||[]).forEach(v=>{if(!existing.has(v.submittedAt))merged.roundVotes[r].push(v);});
+        });
+      }
+      await dbWrite(merged);
+      setAppData(merged);
+      setError(null);
+    }catch(e){setError("Save failed: "+e.message);}
+  }
+
+  if(loading) return h(Loader,null);
+
+  return h("div",{style:{minHeight:"100vh",background:"#04252F",fontFamily:"Georgia,serif",color:"#FFFDF7"}},
+    error&&h(ErrorBanner,{msg:error,onDismiss:()=>setError(null)}),
+    screen==="home"&&h(HomeScreen,{appData,setScreen,setViewId}),
+    screen==="entry"&&h(EntryScreen,{appData,save,onBack:()=>setScreen("home")}),
+    screen==="roundvote"&&h(RoundVoteScreen,{appData,save,onBack:()=>setScreen("home")}),
+    screen==="admin"&&h(AdminScreen,{appData,save,onBack:()=>setScreen("home"),setViewId,setScreen}),
+    screen==="view"&&h(ViewScreen,{appData,entryId:viewId,onBack:()=>setScreen("home")})
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(h(App,null));
+</script>
+</body>
+</html>
