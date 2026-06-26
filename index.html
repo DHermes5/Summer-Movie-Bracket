@@ -26,19 +26,19 @@ const JSONBIN_BIN_ID  = "6a282457f5f4af5e29d24ab8";
 const ADMIN_PIN = "htown2025";
 
 const REGIONS = [
-  { id:"beach", name:"BEACH", icon:"🏖️", color:"#FFD166", movies:[
+  { id:"beach", name:"BEACH", icon:"Beach", color:"#FFD166", movies:[
     "Jaws","The Sandlot","Grease","Mamma Mia!","Top Gun","Dirty Dancing",
     "Lilo & Stitch","Blue Crush","Baywatch","Cocktail","Weekend at Bernie's",
     "Into the Blue","The Beach","The Blue Lagoon","Overboard","Summer Rental"]},
-  { id:"sun", name:"SUN", icon:"☀️", color:"#FF6B00", movies:[
+  { id:"sun", name:"SUN", icon:"Sun", color:"#FF6B00", movies:[
     "Stand By Me","The Goonies","Ferris Bueller's Day Off","Superbad","Risky Business",
     "Fast Times at Ridgemont High","Dazed and Confused","American Graffiti","Wet Hot American Summer",
     "Nat'l Lampoon's Vacation","Caddyshack","Meatballs","Porky's","Heavyweights","Camp Nowhere","Sisterhood of the Traveling Pants"]},
-  { id:"wave", name:"WAVE", icon:"🌊", color:"#06D6A0", movies:[
+  { id:"wave", name:"WAVE", icon:"Wave", color:"#06D6A0", movies:[
     "Point Break","Cast Away","The Notebook","Forgetting Sarah Marshall","50 First Dates",
     "Under the Tuscan Sun","Eat Pray Love","Roman Holiday","Enchanted April","Summer I Turned Pretty",
     "Blue Hawaii","South Pacific","Splash","Aquamarine","Fool's Gold","Overboard (1987)"]},
-  { id:"heat", name:"HEAT", icon:"🔥", color:"#EF476F", movies:[
+  { id:"heat", name:"HEAT", icon:"Fire", color:"#EF476F", movies:[
     "Jurassic Park","Independence Day","Men in Black","The Dark Knight","Iron Man",
     "Avengers: Endgame","Guardians of the Galaxy","Spider-Man: No Way Home","Top Gun: Maverick",
     "Mission: Impossible","Transformers","Pirates of the Caribbean","Raiders of the Lost Ark",
@@ -175,8 +175,8 @@ function getMatchupsForRound(roundIdx, actuals){
       return e.winner?(e.winner==="top"?e.top:e.bot):null;
     };
     const c0=getChamp(0),c1=getChamp(1),c2=getChamp(2),c3=getChamp(3);
-    if(c0||c1) matchups.push({key:"ff_0",top:c0,bot:c1,color:"#FFD166",label:"🏅 Final Four"});
-    if(c2||c3) matchups.push({key:"ff_1",top:c2,bot:c3,color:"#FFD166",label:"🏅 Final Four"});
+    if(c0||c1) matchups.push({key:"ff_0",top:c0,bot:c1,color:"#FFD166",label:"Final Four"});
+    if(c2||c3) matchups.push({key:"ff_1",top:c2,bot:c3,color:"#FFD166",label:"Final Four"});
   } else if(roundIdx===5){
     const getChamp=(ri)=>{
       const picks={};
@@ -191,7 +191,7 @@ function getMatchupsForRound(roundIdx, actuals){
     const sf1={top:c2,bot:c3};
     const top=ff0w?(ff0w==="top"?sf0.top:sf0.bot):null;
     const bot=ff1w?(ff1w==="top"?sf1.top:sf1.bot):null;
-    if(top||bot) matchups.push({key:"champ",top,bot,color:"#FF6B00",label:"🏆 Championship"});
+    if(top||bot) matchups.push({key:"champ",top,bot,color:"#FF6B00",label:"Championship"});
   }
   return matchups;
 }
@@ -229,7 +229,7 @@ function RoundVoteScreen({appData,save,onBack}){
         <div style={{fontSize:48,marginBottom:16}}>🔒</div>
         <h2 style={{fontFamily:"'Georgia',serif",color:"#FFD166",marginBottom:8}}>Voting Not Open</h2>
         <p style={{color:"rgba(255,255,255,0.4)",fontSize:13}}>Round voting opens once the previous round is locked and the current round is active. Check back soon!</p>
-        <Btn onClick={onBack} style={{marginTop:24}}>← Back to Home</Btn>
+        <Btn onClick={onBack} style={{marginTop:24}}>Back to Home</Btn>
       </div>
     </div>
   );
@@ -239,7 +239,7 @@ function RoundVoteScreen({appData,save,onBack}){
       <div style={{fontSize:56,marginBottom:16}}>🗳️</div>
       <h2 style={{fontFamily:"'Georgia',serif",color:"#06D6A0",marginBottom:8}}>Vote Submitted!</h2>
       <p style={{color:"rgba(255,255,255,0.4)",fontSize:13}}>Your picks for {ROUND_NAMES[current]} are in. Each correct pick earns {pts} point{pts!==1?"s":""}!</p>
-      <Btn primary onClick={onBack} style={{marginTop:24}}>← Back to Home</Btn>
+      <Btn primary onClick={onBack} style={{marginTop:24}}>Back to Home</Btn>
     </div>
   );
 
@@ -293,7 +293,7 @@ function RoundVoteScreen({appData,save,onBack}){
       </div>
       <div style={{textAlign:"center",marginTop:28}}>
         <Btn primary onClick={handleSubmit} disabled={busy} style={{fontSize:14,padding:"12px 36px"}}>
-          {busy?"Saving…":"Submit My Votes 🗳️"}
+          {busy?"Saving...":"Submit My Votes"}
         </Btn>
       </div>
     </div>
@@ -343,7 +343,7 @@ function HomeScreen({appData,setScreen,setViewId,save}){
         <h1 style={{fontFamily:"'Georgia',serif",fontSize:"clamp(26px,6vw,52px)",fontWeight:900,margin:0,lineHeight:1.05,letterSpacing:2,background:"linear-gradient(135deg,#FFD166,#FF6B00,#EF476F)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>SUMMER CINEMA<br/>SHOWDOWN</h1>
         <p style={{color:"#FFD166",letterSpacing:4,fontSize:10,marginTop:10,opacity:0.8}}>H-TOWN ACCOUNTING · 64 FILMS · 6 ROUNDS</p>
         <div style={{display:"inline-flex",gap:0,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,marginTop:16,overflow:"hidden"}}>
-          {[{label:"Brackets",value:Object.keys(entries).length,color:"#FFD166"},{label:"Round",value:ROUND_NAMES[current],color:"#FF6B00"},{label:"Status",value:locked[current]?"🔒 Locked":"✅ Open",color:"#06D6A0"}].map((s,i)=>(
+          {[{label:"Brackets",value:Object.keys(entries).length,color:"#FFD166"},{label:"Round",value:ROUND_NAMES[current],color:"#FF6B00"},{label:"Status",value:locked[current]?"Locked":"Open",color:"#06D6A0"}].map((s,i)=>(
             <div key={i} style={{padding:"12px 20px",textAlign:"center",borderRight:i<2?"1px solid rgba(255,255,255,0.08)":"none"}}>
               <div style={{fontFamily:"'Georgia',serif",fontSize:20,fontWeight:700,color:s.color}}>{s.value}</div>
               <div style={{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginTop:3}}>{s.label}</div>
@@ -358,15 +358,15 @@ function HomeScreen({appData,setScreen,setViewId,save}){
 
       <div style={{display:"flex",gap:10,marginBottom:28,flexWrap:"wrap"}}>
         <Btn primary onClick={()=>setScreen("entry")} disabled={!bracketOpen} style={{flex:"1 1 200px",fontSize:14,padding:"13px"}}>
-          {bracketOpen?"🎬 Fill Out My Bracket":"🔒 Bracket Submission Closed"}
+          {bracketOpen?"Fill Out My Bracket":"Bracket Submission Closed"}
         </Btn>
         <Btn primary onClick={()=>setScreen("roundvote")} disabled={!roundVoteOpen} style={{flex:"1 1 200px",fontSize:14,padding:"13px",background:roundVoteOpen?"linear-gradient(135deg,#06D6A0,#1F8ECD)":""}}>
-          {roundVoteOpen?"🗳️ Vote This Round!":"🗳️ Round Voting Closed"}
+          {roundVoteOpen?"Vote This Round!":"Round Voting Closed"}
         </Btn>
       </div>
 
       {roundVoteOpen&&(
-        <Card title={"🗳️ "+ROUND_NAMES[current]+" — Live Vote Tally"} style={{marginBottom:20}}>
+        <Card title={"Vote This Round - "+ROUND_NAMES[current]} style={{marginBottom:20}}>
           <p style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginBottom:12}}>{currentVotes.length} vote{currentVotes.length!==1?"s":""} cast so far · {PTS[Math.min(current,5)]} pts per correct pick</p>
           {getMatchupsForRound(current,actuals).slice(0,6).map(({key,top,bot,color,label})=>{
             const tv=voteTotals[key]||{top:0,bot:0};
@@ -388,20 +388,20 @@ function HomeScreen({appData,setScreen,setViewId,save}){
         </Card>
       )}
 
-      <Card title="📋 Find My Bracket" style={{marginBottom:20}}>
+      <Card title="Find My Bracket" style={{marginBottom:20}}>
         <div style={{display:"flex",gap:8}}>
-          <input value={nameQ} onChange={e=>{setNameQ(e.target.value);setLookErr("");}} placeholder="Your name…" style={{...iStyle,flex:1}} onKeyDown={e=>e.key==="Enter"&&handleLookup()}/>
+          <input value={nameQ} onChange={e=>{setNameQ(e.target.value);setLookErr("");}} placeholder="Your name..." style={{...iStyle,flex:1}} onKeyDown={e=>e.key==="Enter"&&handleLookup()}/>
           <Btn onClick={handleLookup}>Find</Btn>
         </div>
         {lookErr&&<Err style={{marginTop:8}}>{lookErr}</Err>}
       </Card>
 
       {scored.length>0&&locked[0]&&(
-        <Card title="🏆 Leaderboard" style={{marginBottom:20}}>
+        <Card title="Leaderboard" style={{marginBottom:20}}>
           {scored.slice(0,10).map((e,i)=>(
             <div key={e.id} onClick={()=>{setViewId(e.id);setScreen("view");}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:8,cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={el=>el.currentTarget.style.background="rgba(255,209,102,0.07)"} onMouseLeave={el=>el.currentTarget.style.background="transparent"}>
-              <span style={{width:22,fontSize:13,textAlign:"center",flexShrink:0}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{color:"rgba(255,255,255,0.3)",fontSize:10}}>{i+1}</span>}</span>
-              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>{e.name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{e.dept||"—"}{locked[0]?" · "+(getChampion(e.picks)||"No champion yet"):""}</div></div>
+              <span style={{width:22,fontSize:13,textAlign:"center",flexShrink:0}}>{i===0?"1st":i===1?"2nd":i===2?"3rd":<span style={{color:"rgba(255,255,255,0.3)",fontSize:10}}>{i+1}</span>}</span>
+              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>{e.name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{e.dept||"-"}{locked[0]?" - "+(getChampion(e.picks)||"No champion yet"):""}</div></div>
               <div style={{textAlign:"right"}}><div style={{color:"#FFD166",fontWeight:700,fontSize:16,fontFamily:"'Georgia',serif"}}>{e.score}</div><div style={{fontSize:8,color:"rgba(255,255,255,0.3)",letterSpacing:1}}>PTS</div></div>
             </div>
           ))}
@@ -434,8 +434,8 @@ function EntryScreen({appData,save,onBack}){
   function handleInfoNext(){if(!name.trim()){setInfoErr("Please enter your name.");return;}const dup=Object.values(entries).find(e=>e.name.toLowerCase()===name.trim().toLowerCase());if(dup){setInfoErr("A bracket with that name already exists.");return;}setInfoErr("");setStep("bracket");}
   async function handleSubmit(){const done=countPicks(picks);if(done<63){setSubmitErr("Complete all picks first ("+done+"/63 done).");return;}setBusy(true);const d=JSON.parse(JSON.stringify(appData));const id="e_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);d.entries[id]={name:name.trim(),dept:dept.trim(),picks,submittedAt:new Date().toISOString()};await save(d);setSuccess(true);setBusy(false);}
   function setPick(key,val){setPicks(p=>({...p,[key]:val}));setSubmitErr("");}
-  if(success)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16,padding:20,position:"relative",zIndex:1}}><div style={{fontSize:56}}>🎉</div><h2 style={{fontFamily:"'Georgia',serif",fontSize:28,color:"#06D6A0",margin:0}}>Bracket Submitted!</h2><p style={{color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:340}}>Good luck, {name}! Check the leaderboard after each round.</p><Btn primary onClick={onBack} style={{marginTop:8}}>← Back to Home</Btn></div>);
-  if(step==="info")return(<div style={{position:"relative",zIndex:1,maxWidth:460,margin:"0 auto",padding:"40px 20px"}}><BackBtn onClick={onBack}/><h2 style={{fontFamily:"'Georgia',serif",fontSize:26,color:"#FFD166",margin:"16px 0 6px"}}>Your Info</h2><p style={{color:"rgba(255,255,255,0.4)",fontSize:13,marginBottom:28}}>Enter your details before picking your bracket.</p><div style={{display:"flex",flexDirection:"column",gap:14}}><label style={lblStyle}>Full Name *<input value={name} onChange={e=>{setName(e.target.value);setInfoErr("");}} placeholder="Jamie Garcia" style={iStyle}/></label><label style={lblStyle}>Department<input value={dept} onChange={e=>setDept(e.target.value)} placeholder="Tax, Audit, Advisory…" style={iStyle}/></label>{infoErr&&<Err>{infoErr}</Err>}<Btn primary onClick={handleInfoNext} style={{marginTop:8}}>Continue → Fill Bracket</Btn></div></div>);
+  if(success)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16,padding:20,position:"relative",zIndex:1}}><div style={{fontSize:56}}>🎉</div><h2 style={{fontFamily:"'Georgia',serif",fontSize:28,color:"#06D6A0",margin:0}}>Bracket Submitted!</h2><p style={{color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:340}}>Good luck, {name}! Check the leaderboard after each round.</p><Btn primary onClick={onBack} style={{marginTop:8}}>Back to Home</Btn></div>);
+  if(step==="info")return(<div style={{position:"relative",zIndex:1,maxWidth:460,margin:"0 auto",padding:"40px 20px"}}><BackBtn onClick={onBack}/><h2 style={{fontFamily:"'Georgia',serif",fontSize:26,color:"#FFD166",margin:"16px 0 6px"}}>Your Info</h2><p style={{color:"rgba(255,255,255,0.4)",fontSize:13,marginBottom:28}}>Enter your details before picking your bracket.</p><div style={{display:"flex",flexDirection:"column",gap:14}}><label style={lblStyle}>Full Name *<input value={name} onChange={e=>{setName(e.target.value);setInfoErr("");}} placeholder="Jamie Garcia" style={iStyle}/></label><label style={lblStyle}>Department<input value={dept} onChange={e=>setDept(e.target.value)} placeholder="Tax, Audit, Advisory..." style={iStyle}/></label>{infoErr&&<Err>{infoErr}</Err>}<Btn primary onClick={handleInfoNext} style={{marginTop:8}}>Continue → Fill Bracket</Btn></div></div>);
   const regionRounds=REGIONS.map((_,ri)=>deriveRegion(ri,picks));
   const {ff,champ}=deriveFinals(picks,regionRounds);
   const done=countPicks(picks);
@@ -445,12 +445,12 @@ function EntryScreen({appData,save,onBack}){
         <BackBtn onClick={()=>setStep("info")}/>
         <div style={{flex:1}}><h2 style={{margin:0,fontFamily:"'Georgia',serif",fontSize:20,color:"#FFD166"}}>{name}'s Bracket</h2><p style={{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}}>{done}/63 picks · click a film to advance it</p></div>
         <ProgPill done={done} total={63}/>
-        <Btn primary onClick={handleSubmit} disabled={busy}>{busy?"Saving…":"Submit Bracket ✓"}</Btn>
+        <Btn primary onClick={handleSubmit} disabled={busy}>{busy?"Saving...":"Submit Bracket"}</Btn>
       </div>
       {submitErr&&<div style={{background:"rgba(239,71,111,0.12)",border:"1px solid #EF476F",borderRadius:8,padding:"10px 14px",color:"#EF476F",fontSize:12,marginBottom:16}}>{submitErr}</div>}
       {REGIONS.map((reg,ri)=>(<RegionGrid key={ri} reg={reg} ri={ri} rounds={regionRounds[ri]} picks={picks} onPick={setPick} actuals={{}}/>))}
       <FinalsGrid ff={ff} champ={champ} picks={picks} onPick={setPick} actuals={{}}/>
-      <div style={{textAlign:"center",marginTop:28}}><Btn primary onClick={handleSubmit} disabled={busy} style={{fontSize:15,padding:"13px 36px"}}>{busy?"Saving…":"Submit My Bracket ("+done+"/63)"}</Btn></div>
+      <div style={{textAlign:"center",marginTop:28}}><Btn primary onClick={handleSubmit} disabled={busy} style={{fontSize:15,padding:"13px 36px"}}>{busy?"Saving...":"Submit My Bracket ("+done+"/63)"}</Btn></div>
     </div>
   );
 }
@@ -460,7 +460,7 @@ function ViewScreen({appData,entryId,onBack}){
   const entry=appData.entries?.[entryId];
   const actuals=appData.rounds?.actualWinners||{};
   const locked=appData.rounds?.locked||{};
-  if(!entry)return <div style={{padding:40,textAlign:"center",color:"rgba(255,255,255,0.4)"}}>Entry not found.<br/><br/><Btn onClick={onBack}>← Back</Btn></div>;
+  if(!entry)return <div style={{padding:40,textAlign:"center",color:"rgba(255,255,255,0.4)"}}>Entry not found.<br/><br/><Btn onClick={onBack}>Back</Btn></div>;
   const picks=entry.picks;
   const rr=REGIONS.map((_,ri)=>deriveRegion(ri,picks));
   const {ff,champ}=deriveFinals(picks,rr);
@@ -470,7 +470,7 @@ function ViewScreen({appData,entryId,onBack}){
     <div style={{position:"relative",zIndex:1,maxWidth:960,margin:"0 auto",padding:"20px 12px 80px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
         <BackBtn onClick={onBack}/>
-        <div style={{flex:1}}><h2 style={{margin:0,fontFamily:"'Georgia',serif",fontSize:20,color:"#FFD166"}}>{entry.name}'s Bracket</h2><p style={{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}}>{entry.dept||"—"} · {new Date(entry.submittedAt).toLocaleDateString()}{locked[0]?" · Champion: "+(champ_movie||"Not picked"):""}</p></div>
+        <div style={{flex:1}}><h2 style={{margin:0,fontFamily:"'Georgia',serif",fontSize:20,color:"#FFD166"}}>{entry.name}'s Bracket</h2><p style={{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}}>{entry.dept||"-"} - {new Date(entry.submittedAt).toLocaleDateString()}{locked[0]?" - Champion: "+(champ_movie||"Not picked"):""}</p></div>
         <div style={{background:"rgba(255,209,102,0.08)",border:"1px solid rgba(255,209,102,0.3)",borderRadius:10,padding:"8px 16px",textAlign:"center"}}><div style={{fontFamily:"'Georgia',serif",fontSize:22,color:"#FFD166",fontWeight:700}}>{pts}</div><div style={{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)"}}>PTS</div></div>
       </div>
       {locked[0]?<>{REGIONS.map((reg,ri)=>(<RegionGrid key={ri} reg={reg} ri={ri} rounds={rr[ri]} picks={picks} onPick={null} actuals={actuals}/>))}<FinalsGrid ff={ff} champ={champ} picks={picks} onPick={null} actuals={actuals}/></>:<div style={{textAlign:"center",padding:"60px 20px",color:"rgba(255,255,255,0.35)",fontSize:14}}>🔒 Brackets are hidden until Round 1 begins.<br/><br/><span style={{fontSize:12}}>Check back once the admin locks Round 1!</span></div>}
@@ -488,12 +488,12 @@ function AdminScreen({appData,save,onBack,setViewId,setScreen}){
   const list=Object.entries(entries);
   const scored=list.map(([id,e])=>({id,...e,score:scoreBracket(e.picks,actuals)})).sort((a,b)=>b.score-a.score);
   async function patch(fn){setBusy(true);const d=JSON.parse(JSON.stringify(appData));fn(d);await save(d);setBusy(false);}
-  const tabs=[{id:"overview",label:"📊 Overview"},{id:"rounds",label:"⚙️ Rounds"},{id:"results",label:"🏆 Results"},{id:"entries",label:"📋 Entries"},{id:"roundvotes",label:"🗳️ Round Votes"}];
+  const tabs=[{id:"overview",label:"Overview"},{id:"rounds",label:"Rounds"},{id:"results",label:"Results"},{id:"entries",label:"Entries"},{id:"roundvotes",label:"Round Votes"}];
   return(
     <div style={{position:"relative",zIndex:1,maxWidth:960,margin:"0 auto",padding:"20px 12px 80px"}}>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
         <BackBtn onClick={onBack}/>
-        <div style={{flex:1}}><h2 style={{margin:0,fontFamily:"'Georgia',serif",fontSize:20,color:"#FF6B00"}}>Admin Dashboard</h2><p style={{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}}>H-Town Accounting{busy?" · Saving…":""}</p></div>
+        <div style={{flex:1}}><h2 style={{margin:0,fontFamily:"'Georgia',serif",fontSize:20,color:"#FF6B00"}}>Admin Dashboard</h2><p style={{margin:0,fontSize:11,color:"rgba(255,255,255,0.35)"}}>H-Town Accounting{busy?" - Saving...":""}</p></div>
         <div style={{background:"rgba(255,107,0,0.08)",border:"1px solid rgba(255,107,0,0.3)",borderRadius:10,padding:"8px 16px",textAlign:"center"}}><div style={{fontFamily:"'Georgia',serif",fontSize:22,color:"#FF6B00",fontWeight:700}}>{list.length}</div><div style={{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)"}}>BRACKETS</div></div>
       </div>
       <div style={{display:"flex",gap:2,marginBottom:20,borderBottom:"1px solid rgba(255,255,255,0.07)",overflowX:"auto"}}>
@@ -515,8 +515,8 @@ function AdminOverview({scored,list,rounds,setViewId,setScreen}){
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10}}>
         {[{label:"Total Brackets",value:list.length,color:"#FFD166"},{label:"Complete",value:complete,color:"#06D6A0"},{label:"Incomplete",value:list.length-complete,color:"#EF476F"},{label:"Active Round",value:ROUND_NAMES[rounds.current||0],color:"#FF6B00"}].map(s=>(<div key={s.label} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"14px 12px",textAlign:"center"}}><div style={{fontFamily:"'Georgia',serif",fontSize:22,color:s.color,fontWeight:700}}>{s.value}</div><div style={{fontSize:8,letterSpacing:2,color:"rgba(255,255,255,0.35)",marginTop:4,textTransform:"uppercase"}}>{s.label}</div></div>))}
       </div>
-      <Card title="🥇 Top 10">
-        {scored.slice(0,10).map((e,i)=>(<div key={e.id} onClick={()=>{setViewId(e.id);setScreen("view");}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:8,cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={el=>el.currentTarget.style.background="rgba(255,209,102,0.07)"} onMouseLeave={el=>el.currentTarget.style.background="transparent"}><span style={{width:22,textAlign:"center",fontSize:13}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{color:"rgba(255,255,255,0.3)",fontSize:10}}>{i+1}</span>}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>{e.name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{e.dept}</div></div><div style={{color:"#FFD166",fontWeight:700,fontSize:15,fontFamily:"'Georgia',serif"}}>{e.score} pts</div></div>))}
+      <Card title="Top 10">
+        {scored.slice(0,10).map((e,i)=>(<div key={e.id} onClick={()=>{setViewId(e.id);setScreen("view");}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:8,cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.04)"}} onMouseEnter={el=>el.currentTarget.style.background="rgba(255,209,102,0.07)"} onMouseLeave={el=>el.currentTarget.style.background="transparent"}><span style={{width:22,textAlign:"center",fontSize:13}}>{i===0?"1st":i===1?"2nd":i===2?"3rd":<span style={{color:"rgba(255,255,255,0.3)",fontSize:10}}>{i+1}</span>}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>{e.name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{e.dept}</div></div><div style={{color:"#FFD166",fontWeight:700,fontSize:15,fontFamily:"'Georgia',serif"}}>{e.score} pts</div></div>))}
       </Card>
     </div>
   );
@@ -526,21 +526,49 @@ function AdminRounds({rounds,patch}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <p style={{color:"rgba(255,255,255,0.4)",fontSize:12,marginTop:0}}>Set deadlines, advance the active round, and lock rounds to freeze submissions. Round voting opens automatically when the previous round is locked and the current round is active and unlocked.</p>
-      {ROUND_NAMES.map((name,i)=>{const active=rounds.current===i,lk=rounds.locked?.[i],dl=rounds.deadlines?.[i]||"";return(<div key={i} style={{background:active?"rgba(255,107,0,0.07)":"rgba(255,255,255,0.03)",border:"1px solid "+(active?"#FF6B00":"rgba(255,255,255,0.07)"),borderRadius:12,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}><div style={{flex:"1 1 120px"}}><div style={{fontWeight:700,color:active?"#FF6B00":"#FFFDF7",fontSize:14}}>{name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2}}>Round {i+1}</div></div><div style={{display:"flex",flexDirection:"column",gap:4,flex:"1 1 180px"}}><label style={{fontSize:8,color:"rgba(255,255,255,0.35)",letterSpacing:2}}>DEADLINE</label><input type="datetime-local" value={dl} onChange={e=>patch(d=>{d.rounds.deadlines=d.rounds.deadlines||{};d.rounds.deadlines[i]=e.target.value;})} style={{...iStyle,fontSize:11,padding:"5px 10px"}}/></div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{!active&&<Btn onClick={()=>patch(d=>d.rounds.current=i)}>Set Active</Btn>}{active&&<span style={{fontSize:10,color:"#FF6B00",background:"rgba(255,107,0,0.1)",border:"1px solid #FF6B00",borderRadius:20,padding:"4px 12px"}}>● ACTIVE</span>}<Btn onClick={()=>patch(d=>{d.rounds.locked=d.rounds.locked||{};d.rounds.locked[i]=!d.rounds.locked[i];})} style={{borderColor:lk?"#EF476F":"",color:lk?"#EF476F":""}}>{lk?"🔒 Locked":"🔓 Lock"}</Btn></div></div>);})}
+      {ROUND_NAMES.map((name,i)=>{const active=rounds.current===i,lk=rounds.locked?.[i],dl=rounds.deadlines?.[i]||"";return(<div key={i} style={{background:active?"rgba(255,107,0,0.07)":"rgba(255,255,255,0.03)",border:"1px solid "+(active?"#FF6B00":"rgba(255,255,255,0.07)"),borderRadius:12,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}><div style={{flex:"1 1 120px"}}><div style={{fontWeight:700,color:active?"#FF6B00":"#FFFDF7",fontSize:14}}>{name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2}}>Round {i+1}</div></div><div style={{display:"flex",flexDirection:"column",gap:4,flex:"1 1 180px"}}><label style={{fontSize:8,color:"rgba(255,255,255,0.35)",letterSpacing:2}}>DEADLINE</label><input type="datetime-local" value={dl} onChange={e=>patch(d=>{d.rounds.deadlines=d.rounds.deadlines||{};d.rounds.deadlines[i]=e.target.value;})} style={{...iStyle,fontSize:11,padding:"5px 10px"}}/></div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{!active&&<Btn onClick={()=>patch(d=>d.rounds.current=i)}>Set Active</Btn>}{active&&<span style={{fontSize:10,color:"#FF6B00",background:"rgba(255,107,0,0.1)",border:"1px solid #FF6B00",borderRadius:20,padding:"4px 12px"}}>● ACTIVE</span>}<Btn onClick={()=>patch(d=>{d.rounds.locked=d.rounds.locked||{};d.rounds.locked[i]=!d.rounds.locked[i];})} style={{borderColor:lk?"#EF476F":"",color:lk?"#EF476F":""}}>{lk?"Locked":"Lock"}</Btn></div></div>);})}
     </div>
   );
 }
 
 function AdminResults({appData,actuals,patch,list}){
   function tally(key){let t=0,b=0;list.forEach(([,e])=>{if(e.picks[key]==="top")t++;else if(e.picks[key]==="bot")b++;});return{t,b,total:t+b};}
-  const sample=list[0]?.[1]?.picks||{};
-  const sRR=REGIONS.map((_,ri)=>deriveRegion(ri,sample));
-  const {ff,champ}=deriveFinals(sample,sRR);
+
+  // Build matchups for ALL rounds using actual winners to determine survivors
+  function getFilmForSlot(ri,rIdx,mi){
+    // returns the film that occupies slot mi in round rIdx of region ri, based on actual winners
+    if(rIdx===0) return {top:REGIONS[ri].movies[mi*2], bot:REGIONS[ri].movies[mi*2+1]};
+    const prev0=getFilmForSlot(ri,rIdx-1,mi*2);
+    const prev1=getFilmForSlot(ri,rIdx-1,mi*2+1);
+    const w0=actuals[getKey(ri,rIdx-1,mi*2)];
+    const w1=actuals[getKey(ri,rIdx-1,mi*2+1)];
+    const top=w0?(w0==="top"?prev0.top:prev0.bot):null;
+    const bot=w1?(w1==="top"?prev1.top:prev1.bot):null;
+    return {top,bot};
+  }
+
+  function getRegionChamp(ri){
+    const slot=getFilmForSlot(ri,3,0);
+    const w=actuals[getKey(ri,3,0)];
+    return w?(w==="top"?slot.top:slot.bot):null;
+  }
+
+  const c0=getRegionChamp(0),c1=getRegionChamp(1),c2=getRegionChamp(2),c3=getRegionChamp(3);
+  const ff0w=actuals["ff_0"],ff1w=actuals["ff_1"];
+  const ffTop=ff0w?(ff0w==="top"?c0:c1):null;
+  const ffBot=ff1w?(ff1w==="top"?c2:c3):null;
+
   const allMatchups=[
-    ...REGIONS.flatMap((reg,ri)=>sRR[ri].flatMap((round,rIdx)=>round.map((m,mi)=>({key:getKey(ri,rIdx,mi),label:reg.icon+" "+reg.name+" · "+["R64","R32","Sweet 16","Elite 8"][rIdx]+" · Match "+(mi+1),top:m.top,bot:m.bot,color:reg.color})))),
-    {key:"ff_0",label:"🏅 Final Four · Semifinal 1",top:ff[0]?.top,bot:ff[0]?.bot,color:"#FFD166"},
-    {key:"ff_1",label:"🏅 Final Four · Semifinal 2",top:ff[1]?.top,bot:ff[1]?.bot,color:"#FFD166"},
-    {key:"champ",label:"🏆 Championship",top:champ?.top,bot:champ?.bot,color:"#FF6B00"},
+    ...REGIONS.flatMap((reg,ri)=>[0,1,2,3].flatMap(rIdx=>{
+      const count=8/Math.pow(2,rIdx);
+      return Array.from({length:count},(_,mi)=>{
+        const {top,bot}=getFilmForSlot(ri,rIdx,mi);
+        return {key:getKey(ri,rIdx,mi),label:reg.icon+" "+reg.name+" - "+["R64","R32","Sweet 16","Elite 8"][rIdx]+" - Match "+(mi+1),top,bot,color:reg.color};
+      });
+    })),
+    {key:"ff_0",label:"Final Four - Semifinal 1",top:c0,bot:c1,color:"#FFD166"},
+    {key:"ff_1",label:"Final Four - Semifinal 2",top:c2,bot:c3,color:"#FFD166"},
+    {key:"champ",label:"Championship",top:ffTop,bot:ffBot,color:"#FF6B00"},
   ];
   return(
     <div>
@@ -552,7 +580,7 @@ function AdminResults({appData,actuals,patch,list}){
         return(
           <div key={key} style={{marginBottom:8,background:"rgba(255,255,255,0.03)",borderRadius:8,padding:"10px 12px",border:"1px solid rgba(255,255,255,0.05)"}}>
             <div style={{fontSize:8,color:"rgba(255,255,255,0.3)",letterSpacing:2,marginBottom:7}}>{label}</div>
-            {[[top,"top",t,tp],[bot,"bot",b,bp]].map(([movie,side,votes,pct])=>{if(!movie)return null;const isA=actual===side;return(<div key={side} onClick={()=>patch(d=>{d.rounds.actualWinners=d.rounds.actualWinners||{};if(d.rounds.actualWinners[key]===side)delete d.rounds.actualWinners[key];else d.rounds.actualWinners[key]=side;})} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:6,marginBottom:3,cursor:"pointer",background:isA?"rgba(6,214,160,0.1)":"rgba(255,255,255,0.02)",border:"1px solid "+(isA?"#06D6A0":"rgba(255,255,255,0.04)"),transition:"all 0.15s"}}><div style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(isA?"#06D6A0":"rgba(255,255,255,0.15)"),background:isA?"#06D6A0":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#04252F",fontWeight:700}}>{isA&&"✓"}</div><span style={{flex:1,fontSize:11,color:isA?"#06D6A0":"#FFFDF7"}}>{movie}</span><div style={{width:60,height:4,background:"rgba(255,255,255,0.07)",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:pct+"%",background:color,borderRadius:2}}/></div><span style={{fontSize:10,color,minWidth:50,textAlign:"right"}}>{votes} ({pct}%)</span></div>);})}
+            {[[top,"top",t,tp],[bot,"bot",b,bp]].map(([movie,side,votes,pct])=>{if(!movie)return null;const isA=actual===side;return(<div key={side} onClick={()=>patch(d=>{d.rounds.actualWinners=d.rounds.actualWinners||{};if(d.rounds.actualWinners[key]===side)delete d.rounds.actualWinners[key];else d.rounds.actualWinners[key]=side;})} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:6,marginBottom:3,cursor:"pointer",background:isA?"rgba(6,214,160,0.1)":"rgba(255,255,255,0.02)",border:"1px solid "+(isA?"#06D6A0":"rgba(255,255,255,0.04)"),transition:"all 0.15s"}}><div style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(isA?"#06D6A0":"rgba(255,255,255,0.15)"),background:isA?"#06D6A0":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,color:"#04252F",fontWeight:700}}>{isA&&"*"}</div><span style={{flex:1,fontSize:11,color:isA?"#06D6A0":"#FFFDF7"}}>{movie}</span><div style={{width:60,height:4,background:"rgba(255,255,255,0.07)",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:pct+"%",background:color,borderRadius:2}}/></div><span style={{fontSize:10,color,minWidth:50,textAlign:"right"}}>{votes} ({pct}%)</span></div>);})}
           </div>
         );
       })}
@@ -600,9 +628,9 @@ function AdminEntries({scored,patch,setViewId,setScreen}){
   const filtered=scored.filter(e=>e.name.toLowerCase().includes(q.toLowerCase())||e.dept?.toLowerCase().includes(q.toLowerCase()));
   return(
     <div>
-      <div style={{marginBottom:14}}><input placeholder="Search by name or department…" value={q} onChange={e=>setQ(e.target.value)} style={{...iStyle,maxWidth:340}}/></div>
+      <div style={{marginBottom:14}}><input placeholder="Search..." value={q} onChange={e=>setQ(e.target.value)} style={{...iStyle,maxWidth:340}}/></div>
       <div style={{display:"flex",flexDirection:"column",gap:4}}>
-        {filtered.map((e,i)=>(<div key={e.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}><span style={{width:26,textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.3)"}}>{i+1}</span><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>{e.name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{e.dept||"—"} · {countPicks(e.picks)}/63 picks · {new Date(e.submittedAt).toLocaleDateString()}</div></div><div style={{color:"#FFD166",fontWeight:700,fontSize:14}}>{e.score} pts</div><Btn onClick={()=>{setViewId(e.id);setScreen("view");}}>View</Btn><button onClick={()=>{if(window.confirm("Delete this entry?"))patch(d=>delete d.entries[e.id]);}} style={{background:"none",border:"none",color:"#EF476F",cursor:"pointer",fontSize:18,padding:"0 2px",lineHeight:1}}>×</button></div>))}
+        {filtered.map((e,i)=>(<div key={e.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}><span style={{width:26,textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.3)"}}>{i+1}</span><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>{e.name}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{e.dept||"-"} · {countPicks(e.picks)}/63 picks · {new Date(e.submittedAt).toLocaleDateString()}</div></div><div style={{color:"#FFD166",fontWeight:700,fontSize:14}}>{e.score} pts</div><Btn onClick={()=>{setViewId(e.id);setScreen("view");}}>View</Btn><button onClick={()=>{if(window.confirm("Delete this entry?"))patch(d=>delete d.entries[e.id]);}} style={{background:"none",border:"none",color:"#EF476F",cursor:"pointer",fontSize:18,padding:"0 2px",lineHeight:1}}>×</button></div>))}
         {filtered.length===0&&<div style={{color:"rgba(255,255,255,0.3)",fontSize:13,padding:"20px",textAlign:"center"}}>No entries found.</div>}
       </div>
     </div>
@@ -639,7 +667,7 @@ function FinalsGrid({ff,champ,picks,onPick,actuals}){
 function Matchup({m,picked,actual,onPick,color,isR0,seed0,seed1}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:1.5,margin:"2px 0"}}>
-      {["top","bot"].map((side,si)=>{const movie=m[side],isPicked=picked===side,isAW=actual===side,isAL=actual&&actual!==side,isRight=isAW&&isPicked,isWrong=isAL&&isPicked,empty=!movie;return(<div key={side} onClick={()=>!empty&&onPick&&onPick(side)} style={{display:"flex",alignItems:"center",gap:4,padding:"3.5px 6px",borderRadius:5,minHeight:21,background:isRight?"rgba(6,214,160,0.14)":isWrong?"rgba(239,71,111,0.08)":isPicked?(color+"18"):"rgba(255,255,255,0.04)",border:"1px solid "+(isRight?"#06D6A0":isWrong?"#EF476F":isPicked?color:"rgba(255,255,255,0.07)"),cursor:!empty&&onPick?"pointer":"default",opacity:isAL?0.32:1,transition:"all 0.13s"}}>{isR0&&<span style={{fontSize:6.5,color:color,opacity:0.6,minWidth:9,flexShrink:0}}>{si===0?seed0:seed1}</span>}<span style={{fontSize:9.5,color:isAW?"#06D6A0":empty?"rgba(255,255,255,0.2)":"#FFFDF7",flex:1,lineHeight:1.2,fontStyle:empty?"italic":"normal"}}>{empty?"TBD":movie.length>19?movie.slice(0,18)+"…":movie}</span>{isPicked&&!actual&&<span style={{fontSize:7.5,color,flexShrink:0}}>✓</span>}{isRight&&<span style={{fontSize:8,flexShrink:0}}>✅</span>}{isWrong&&<span style={{fontSize:8,flexShrink:0}}>❌</span>}{isAW&&<span style={{fontSize:8,color:"#06D6A0",flexShrink:0}}>★</span>}</div>);})}
+      {["top","bot"].map((side,si)=>{const movie=m[side],isPicked=picked===side,isAW=actual===side,isAL=actual&&actual!==side,isRight=isAW&&isPicked,isWrong=isAL&&isPicked,empty=!movie;return(<div key={side} onClick={()=>!empty&&onPick&&onPick(side)} style={{display:"flex",alignItems:"center",gap:4,padding:"3.5px 6px",borderRadius:5,minHeight:21,background:isRight?"rgba(6,214,160,0.14)":isWrong?"rgba(239,71,111,0.08)":isPicked?(color+"18"):"rgba(255,255,255,0.04)",border:"1px solid "+(isRight?"#06D6A0":isWrong?"#EF476F":isPicked?color:"rgba(255,255,255,0.07)"),cursor:!empty&&onPick?"pointer":"default",opacity:isAL?0.32:1,transition:"all 0.13s"}}>{isR0&&<span style={{fontSize:6.5,color:color,opacity:0.6,minWidth:9,flexShrink:0}}>{si===0?seed0:seed1}</span>}<span style={{fontSize:9.5,color:isAW?"#06D6A0":empty?"rgba(255,255,255,0.2)":"#FFFDF7",flex:1,lineHeight:1.2,fontStyle:empty?"italic":"normal"}}>{empty?"TBD":movie.length>19?movie.slice(0,18)+"...":movie}</span>{isPicked&&!actual&&<span style={{fontSize:7.5,color,flexShrink:0}}>✓</span>}{isRight&&<span style={{fontSize:8,flexShrink:0}}>✅</span>}{isWrong&&<span style={{fontSize:8,flexShrink:0}}>❌</span>}{isAW&&<span style={{fontSize:8,color:"#06D6A0",flexShrink:0}}>★</span>}</div>);})}
     </div>
   );
 }
@@ -688,7 +716,7 @@ function App(){
       await dbWrite(merged);
       setAppData(merged);
       setError(null);
-    }catch(e){setError("Save failed — "+e.message);}
+    }catch(e){setError("Save failed: "+e.message);}
   }
 
   if(loading) return <Loader/>;
